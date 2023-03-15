@@ -22,7 +22,7 @@ public class SpamDetector {
         int numFiles = filesInDir.length;
 
         // iterate over each file in the dir and find words
-        for (int i = 0; i<numFiles; i++){
+        for (int i = 0; i<numFiles; i++) {
             Map<String, Integer> wordMap = findWordInFile(filesInDir[i]);
 
             // merge the file wordMap into the global frequencies
@@ -48,8 +48,8 @@ public class SpamDetector {
     }
 
     //helper function
-    public Map<File, Float> fileSpamProbDir(File dir, Map<String,Float> probSpam) {
-        Map<File, Float> probabilities = new TreeMap<>(); //global map for <Email, Prob that email is spam>
+    public Map<String, Float> fileSpamProbDir(File dir, Map<String,Float> probSpam) {
+        Map<String, Float> probabilities = new TreeMap<>(); //global map for <Email, Prob that email is spam>
 
         File[] filesInDir = dir.listFiles();
         int numFiles = filesInDir.length;
@@ -77,7 +77,7 @@ public class SpamDetector {
 
             float PrSF = (float) (1 / (1 + Math.pow(Math.E, eta))); //prob that a file is spam, after checking all words of file
 
-            probabilities.put(filesInDir[i], PrSF);
+            probabilities.put(filesInDir[i].getName(), PrSF);
         }
 
         return probabilities; //map of <Email, Prob that email is spam>
@@ -88,7 +88,7 @@ public class SpamDetector {
 
         Map<String, Integer> trainHamFreq = new TreeMap<>(); //map of <word, number of files containing that word in ham folder>
         Map<String, Integer> trainSpamFreq = new TreeMap<>(); //map of <word, number of files containing that word in spam folder>
-        Map<String,Float> probSpam = new TreeMap<>(); //map of <word Wi, PSWi>
+        Map<String, Float> probSpam = new TreeMap<>(); //map of <word Wi, PSWi>
         //PSWi = Prob that file is spam, given that it contains the word Wi
 
         //????
@@ -119,15 +119,13 @@ public class SpamDetector {
         Iterator<String> frequenciesIteratorSpam = keysSpam.iterator(); //iterate over words
 
         while (frequenciesIteratorSpam.hasNext()) {
-        //if(trainHamFreq.containsKey(word)) {
+            //if(trainHamFreq.containsKey(word)) {
             word = frequenciesIteratorSpam.next();
             PrWiS = (trainSpamFreq.get(word) / numSpamFiles); //Prob that the word Wi appears in spam file
 
             if (trainHamFreq.containsKey(word)) {
                 PrWiH = (trainHamFreq.get(word) / numHamFiles); //Prob that the word Wi appears in ham file
-            }
-
-            else {
+            } else {
                 PrWiH = 0;
             }
 
@@ -136,6 +134,7 @@ public class SpamDetector {
             probSpam.put(word, PrSWi); //put word and probability PrSWi in map probSpam
         }
 
+        //testing
         File TestHamFiles = new File("/test", "/ham"); //directory of ham files (/test/ham)
         File[] TestHamFilesList = TestHamFiles.listFiles();
 
@@ -143,18 +142,43 @@ public class SpamDetector {
         File TestSpamFiles = new File("/test", "/spam"); //directory of spam files (/test/spam)
         File[] TestSpamFilesList = TestSpamFiles.listFiles();
 
-        Map<File, Float> testHamMap = new TreeMap<>();
-        Map<File, Float> testSpamMap = new TreeMap<>();
+        Map<String, Float> testHamMap = new TreeMap<>();
+        Map<String, Float> testSpamMap = new TreeMap<>();
 
         testHamMap = fileSpamProbDir(TestHamFiles, probSpam);
         testSpamMap = fileSpamProbDir(TestSpamFiles, probSpam);
 
-        //????
-        return new ArrayList<TestFile>();
+
+        ArrayList<TestFile> spamResult = new ArrayList<TestFile>();
+        TestFile result = new TestFile(); //object of TestFile
+
+        Set<String> keys = testHamMap.keySet();
+        Iterator<String> keyIterator = keys.iterator(); //iterate over all the keys
+        while (keyIterator.hasNext()) { //iterate through map
+            String name = keyIterator.next();
+            float prob = testHamMap.get(name);
+            result.filename = name;
+            result.spamProbability = prob;
+            result.actualClass = "Ham";
+            spamResult.add(result);
+        }
+
+        Set<String> keys1 = testSpamMap.keySet();
+        Iterator<String> keyIterator1 = keys.iterator();
+        while (keyIterator1.hasNext()) {
+            String name = keyIterator1.next();
+            float prob = testSpamMap.get(name);
+            result.filename = name;
+            result.spamProbability = prob;
+            result.actualClass = "Spam";
+            spamResult.add(result);
+        }
+
+        return spamResult;
     }
 
     //helper function: determine which new words exist in each file (ie each email)
-    private Map<String, Integer> findWordInFile(File file) throws IOException { //helper function
+    private Map<String, Integer> findWordInFile(File file) { //helper function
         Map<String, Integer> wordMap = new TreeMap<>();
         if (file.exists()) {
             //load all the data and process it into words
@@ -173,6 +197,94 @@ public class SpamDetector {
         }
 
     }
+
+    //helper function
+    public float spamAccuracy(ArrayList<TestFile> spamResult) {
+
+        //Positive: email is spam
+        //set 0.95 as the threshold
+        //assumption: if spam prob is >= 0.95, the prediction is that the email is spam
+
+        int numTruePositive = 0; //model correctly predicts the positive class
+        int numTrueNegative = 0; //model correctly predicts the negative class
+        int numFalsePositive = 0; //model incorrectly predicts the positive class
+        int numFiles = spamResult.size();
+
+        float accuracy;
+        float precision;
+        double prob;
+        String realClass;
+
+
+        for (int i = 0; i<numFiles; i++) {
+            prob = spamResult.get(i).spamProbability;
+            realClass = spamResult.get(i).actualClass;
+
+            //if file is in spam folder and prob of file being spam is 0.95 or greater
+            if (prob >= 0.95 && realClass == "Spam") {
+
+                numTruePositive += 1; //increase by 1
+            }
+
+            else if (prob < 0.95 && realClass == "Ham") { //if file is in ham folder and prob of file being spam is less than 0.95
+
+                numTrueNegative += 1;
+            }
+
+            else if (prob >= 0.95 && realClass == "Ham") { //if file is in ham folder and prob of file being spam is 0.95 or greater
+
+                numFalsePositive += 1;
+            }
+        }
+
+        accuracy = ((numTruePositive + numTrueNegative) / numFiles);
+        return accuracy;
+    }
+
+    //helper function
+    public float spamPrecision(ArrayList<TestFile> spamResult) {
+
+        //Positive: email is spam
+        //set 0.95 as the threshold
+        //assumption: if spam prob is >= 0.95, the prediction is that the email is spam
+
+        int numTruePositive = 0; //model correctly predicts the positive class
+        int numTrueNegative = 0; //model correctly predicts the negative class
+        int numFalsePositive = 0; //model incorrectly predicts the positive class
+        int numFiles = spamResult.size();
+
+        float accuracy;
+        float precision;
+        double prob;
+        String realClass;
+
+
+        for (int i = 0; i<numFiles; i++) {
+            prob = spamResult.get(i).spamProbability;
+            realClass = spamResult.get(i).actualClass;
+
+            //if file is in spam folder and prob of file being spam is 0.95 or greater
+            if ((prob >= 0.95) && (realClass == "Spam")) {
+
+                numTruePositive += 1; //increase by 1
+            }
+
+            else if (prob < 0.95 && realClass == "Ham") { //if file is in ham folder and prob of file being spam is less than 0.95
+
+                numTrueNegative += 1;
+            }
+
+            else if ((prob >= 0.95) && (realClass == "Ham")) { //if file is in ham folder and prob of file being spam is 0.95 or greater
+
+                numFalsePositive += 1;
+            }
+        }
+
+        precision = (numTruePositive / (numFalsePositive + numTruePositive));
+        return precision;
+    }
+
+
 
     //check if string is a word or not
     private Boolean isWord(String word){
