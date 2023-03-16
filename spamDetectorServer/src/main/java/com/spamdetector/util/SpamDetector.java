@@ -91,11 +91,10 @@ public class SpamDetector {
         Map<String, Float> probSpam = new TreeMap<>(); //map of <word Wi, PSWi>
         //PSWi = Prob that file is spam, given that it contains the word Wi
 
-        //????
-        File hamFiles = new File("/train", "/ham"); //directory of ham files (/train/ham)
+        File hamFiles = new File(mainDirectory, "/train/ham"); //directory of ham files (/train/ham)
         File[] hamFilesList = hamFiles.listFiles();
 
-        File spamFiles = new File("/train", "/spam"); //directory of spam files (/train/spam)
+        File spamFiles = new File(mainDirectory, "/train/spam"); //directory of spam files (/train/spam)
         File[] spamFilesList = spamFiles.listFiles();
 
 
@@ -121,7 +120,7 @@ public class SpamDetector {
         while (frequenciesIteratorSpam.hasNext()) {
             //if(trainHamFreq.containsKey(word)) {
             word = frequenciesIteratorSpam.next();
-            PrWiS = (trainSpamFreq.get(word) / numSpamFiles); //Prob that the word Wi appears in spam file
+            PrWiS = ((float) trainSpamFreq.get(word) / (float) numSpamFiles); //Prob that the word Wi appears in spam file
 
             if (trainHamFreq.containsKey(word)) {
                 PrWiH = (trainHamFreq.get(word) / numHamFiles); //Prob that the word Wi appears in ham file
@@ -135,11 +134,11 @@ public class SpamDetector {
         }
 
         //testing
-        File TestHamFiles = new File("/test", "/ham"); //directory of ham files (/test/ham)
+        File TestHamFiles = new File(mainDirectory, "/test/ham"); //directory of ham files (/test/ham)
         File[] TestHamFilesList = TestHamFiles.listFiles();
 
 
-        File TestSpamFiles = new File("/test", "/spam"); //directory of spam files (/test/spam)
+        File TestSpamFiles = new File(mainDirectory, "/test/spam"); //directory of spam files (/test/spam)
         File[] TestSpamFilesList = TestSpamFiles.listFiles();
 
         Map<String, Float> testHamMap = new TreeMap<>();
@@ -168,7 +167,7 @@ public class SpamDetector {
         }
 
         Set<String> keys1 = testSpamMap.keySet();
-        Iterator<String> keyIterator1 = keys.iterator();
+        Iterator<String> keyIterator1 = keys1.iterator();
         while (keyIterator1.hasNext()) {
             String name = keyIterator1.next();
             float prob = testSpamMap.get(name);
@@ -315,7 +314,7 @@ public class SpamDetector {
     public static void displayList(List<TestFile> spamResult)
     {
         for (int i = 0; i < spamResult.size(); i++) {
-            System.out.print(spamResult.get(i).getFilename() + " " + spamResult.get(i).getSpamProbability() + " " + spamResult.get(i).getActualClass());
+            System.out.println(spamResult.get(i).getFilename() + " " + spamResult.get(i).getSpamProbability() + " " + spamResult.get(i).getActualClass());
         }
     }
     public static void main(String args[]) throws IOException {
@@ -324,7 +323,9 @@ public class SpamDetector {
 
         SpamDetector myDetector = new SpamDetector();
 
-        File data1 = new File("/src/main/resources/data/test/spam");
+        File data1 = new File("/csci2020u-assignment01-template/spamDetectorServer/src/main/resources/data/test/spam");
+        //File data1 = new File("/src/main/resources/data/test/spam"); //can also do this way
+
         spamResult = myDetector.trainAndTest(data1);
 
         //System.out.println(spamResult);
