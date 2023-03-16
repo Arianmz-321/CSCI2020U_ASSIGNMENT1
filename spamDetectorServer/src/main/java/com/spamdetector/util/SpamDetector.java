@@ -5,7 +5,7 @@ import com.spamdetector.domain.TestFile;
 import java.io.*;
 import java.util.*;
 
-import static java.util.regex.ASCII.isWord;
+//import static java.util.regex.ASCII.isWord;
 
 
 /**
@@ -15,7 +15,7 @@ import static java.util.regex.ASCII.isWord;
 public class SpamDetector {
 
     //helper function
-    public Map<String, Integer> fileFreqDir(File dir) {
+    public Map<String, Integer> fileFreqDir(File dir) throws IOException {
         Map<String, Integer> frequencies = new TreeMap<>(); //global map <Word, Num of files containing word>
 
         File[] filesInDir = dir.listFiles();
@@ -48,7 +48,7 @@ public class SpamDetector {
     }
 
     //helper function
-    public Map<String, Float> fileSpamProbDir(File dir, Map<String,Float> probSpam) {
+    public Map<String, Float> fileSpamProbDir(File dir, Map<String,Float> probSpam) throws IOException {
         Map<String, Float> probabilities = new TreeMap<>(); //global map for <Email, Prob that email is spam>
 
         File[] filesInDir = dir.listFiles();
@@ -83,7 +83,7 @@ public class SpamDetector {
         return probabilities; //map of <Email, Prob that email is spam>
     }
 
-    public List<TestFile> trainAndTest(File mainDirectory) {
+    public List<TestFile> trainAndTest(File mainDirectory) throws IOException {
 //        TODO: main method of loading the directories and files, training and testing the model
 
         Map<String, Integer> trainHamFreq = new TreeMap<>(); //map of <word, number of files containing that word in ham folder>
@@ -178,7 +178,7 @@ public class SpamDetector {
     }
 
     //helper function: determine which new words exist in each file (ie each email)
-    private Map<String, Integer> findWordInFile(File file) { //helper function
+    private Map<String, Integer> findWordInFile(File file) throws IOException { //helper function
         Map<String, Integer> wordMap = new TreeMap<>();
         if (file.exists()) {
             //load all the data and process it into words
@@ -193,13 +193,13 @@ public class SpamDetector {
                 }
 
             }
-            return wordMap;
         }
+        return wordMap;
 
     }
 
     //helper function
-    public float spamAccuracy(ArrayList<TestFile> spamResult) {
+    public double spamAccuracy(ArrayList<TestFile> spamResult) {
 
         //Positive: email is spam
         //set 0.95 as the threshold
@@ -242,7 +242,7 @@ public class SpamDetector {
     }
 
     //helper function
-    public float spamPrecision(ArrayList<TestFile> spamResult) {
+    public double spamPrecision(ArrayList<TestFile> spamResult) {
 
         //Positive: email is spam
         //set 0.95 as the threshold
@@ -285,7 +285,6 @@ public class SpamDetector {
     }
 
 
-
     //check if string is a word or not
     private Boolean isWord(String word){
         if (word == null){
@@ -301,6 +300,13 @@ public class SpamDetector {
 
     }
 
-    public Map<String, Integer> frequencies(File data) {
-    }
+    //public static void testDetector(List<TestFile> trainAndTest(File "/resources/data/test")) {
+    //    System.out.print(spamResult);
+    //}
+
+
+
+    //public Map<String, Integer> frequencies(File data) {
+    //}
+
 }
