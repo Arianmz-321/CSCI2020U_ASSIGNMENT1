@@ -10,6 +10,7 @@ import jakarta.ws.rs.Produces;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -38,21 +39,25 @@ public class SpamResource {
         }
 
         SpamDetector myDetector = new SpamDetector();
-        Map<String, Integer> mapFunc = myDetector.frequencies(data);
+        List<String, Double, String> mapFunc = myDetector.trainAndTest(data1);
 
-        ObjectMapper mapper;
+        ObjectMapper mapper = null;
         Response myResp = Response.status(200).header("Access-Control-Allow-Origin", "http://localhost:8448")
                 .header("Content-Type", "application/json")
-                .entity(mapper.writeValueAsString(mapFunc))
+                .entity(content)
                 .build();
 
         return myResp;
     }
+
     @GET
     @Produces("application/json")
     public Response getSpamResults() {
 //       TODO: return the test results list of TestFile, return in a Response object
-        String content = this.readFileContents("/TestFile.java");
+        //String content = this.readFileContents("/TestFile.java");
+
+
+        return
 
         return Response.status(200)
                 .header("Access-Control-Allow-Origin", "*")
@@ -60,7 +65,7 @@ public class SpamResource {
                 .entity(content)
                 .build();
 
-        return null;
+        //return null;
     }
 
 
@@ -71,13 +76,17 @@ public class SpamResource {
 //      TODO: return the accuracy of the detector, return in a Response object
         String content = this.readFileContents("/TestFile.java");
 
+
+        //calculate accuracy
+        //accuracy = ((numTruePositive + numTrueNegative) / numFiles);
+
         return Response.status(200)
                 .header("Access-Control-Allow-Origin", "*")
                 .header("Content-Type", "application/json")
                 .entity(content)
                 .build();
 
-        return null;
+        //return null;
     }
 
     @GET
@@ -85,6 +94,11 @@ public class SpamResource {
     @Produces("application/json")
     public Response getPrecision() {
        //      TODO: return the precision of the detector, return in a Response object
+
+        //calculate precision
+
+
+
         String content = this.readFileContents("/TestFile.java");
 
         return Response.status(200)
@@ -93,8 +107,9 @@ public class SpamResource {
                 .entity(content)
                 .build();
 
-        return null;
+        //return null;
     }
+
 
     private List<TestFile> trainAndTest()  {
         if (this.detector==null){
@@ -105,4 +120,5 @@ public class SpamResource {
         File mainDirectory = null;
         return this.detector.trainAndTest(mainDirectory);
     }
+
 }
