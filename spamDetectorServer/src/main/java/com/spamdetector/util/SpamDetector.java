@@ -149,17 +149,21 @@ public class SpamDetector {
         testSpamMap = fileSpamProbDir(TestSpamFiles, probSpam);
 
 
-        ArrayList<TestFile> spamResult = new ArrayList<TestFile>();
-        TestFile result = new TestFile(); //object of TestFile
+        List<TestFile> spamResult = new ArrayList<TestFile>();
+
 
         Set<String> keys = testHamMap.keySet();
         Iterator<String> keyIterator = keys.iterator(); //iterate over all the keys
         while (keyIterator.hasNext()) { //iterate through map
             String name = keyIterator.next();
             float prob = testHamMap.get(name);
-            result.filename = name;
-            result.spamProbability = prob;
-            result.actualClass = "Ham";
+
+            //result.filename = name;
+            //result.spamProbability = prob;
+            //result.actualClass = "Ham";
+
+            TestFile result = new TestFile(name, prob, "Ham"); //object of TestFile
+            //result.TestFile(name, prob, "Ham");
             spamResult.add(result);
         }
 
@@ -168,9 +172,12 @@ public class SpamDetector {
         while (keyIterator1.hasNext()) {
             String name = keyIterator1.next();
             float prob = testSpamMap.get(name);
-            result.filename = name;
-            result.spamProbability = prob;
-            result.actualClass = "Spam";
+
+            //result.filename = name;
+            //result.spamProbability = prob;
+            //result.actualClass = "Spam";
+
+            TestFile result = new TestFile(name, prob, "Spam");
             spamResult.add(result);
         }
 
@@ -199,7 +206,7 @@ public class SpamDetector {
     }
 
     //helper function
-    public double spamAccuracy(ArrayList<TestFile> spamResult) {
+    public double spamAccuracy(List<TestFile> spamResult) {
 
         //Positive: email is spam
         //set 0.95 as the threshold
@@ -217,8 +224,8 @@ public class SpamDetector {
 
 
         for (int i = 0; i<numFiles; i++) {
-            prob = spamResult.get(i).spamProbability;
-            realClass = spamResult.get(i).actualClass;
+            prob = spamResult.get(i).getSpamProbability();
+            realClass = spamResult.get(i).getActualClass();
 
             //if file is in spam folder and prob of file being spam is 0.95 or greater
             if (prob >= 0.95 && realClass == "Spam") {
@@ -242,7 +249,7 @@ public class SpamDetector {
     }
 
     //helper function
-    public double spamPrecision(ArrayList<TestFile> spamResult) {
+    public double spamPrecision(List<TestFile> spamResult) {
 
         //Positive: email is spam
         //set 0.95 as the threshold
@@ -260,8 +267,8 @@ public class SpamDetector {
 
 
         for (int i = 0; i<numFiles; i++) {
-            prob = spamResult.get(i).spamProbability;
-            realClass = spamResult.get(i).actualClass;
+            prob = spamResult.get(i).getSpamProbability();
+            realClass = spamResult.get(i).getActualClass();
 
             //if file is in spam folder and prob of file being spam is 0.95 or greater
             if ((prob >= 0.95) && (realClass == "Spam")) {
@@ -300,13 +307,27 @@ public class SpamDetector {
 
     }
 
-    //public static void testDetector(List<TestFile> trainAndTest(File "/resources/data/test")) {
-    //    System.out.print(spamResult);
-    //}
-
-
-
     //public Map<String, Integer> frequencies(File data) {
     //}
 
+
+    //check to make sure output works
+    public static void displayList(List<TestFile> spamResult)
+    {
+        for (int i = 0; i < spamResult.size(); i++) {
+            System.out.print(spamResult.get(i).getFilename() + " " + spamResult.get(i).getSpamProbability() + " " + spamResult.get(i).getActualClass());
+        }
+    }
+    public static void main(String args[]) throws IOException {
+
+        List<TestFile> spamResult = new ArrayList<>();
+
+        SpamDetector myDetector = new SpamDetector();
+
+        File data1 = new File("/src/main/resources/data/test/spam");
+        spamResult = myDetector.trainAndTest(data1);
+
+        //System.out.println(spamResult);
+        displayList(spamResult);
+    }
 }
