@@ -1,6 +1,5 @@
 package com.spamdetector.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spamdetector.domain.TestFile;
 import com.spamdetector.util.SpamDetector;
 import jakarta.ws.rs.GET;
@@ -8,117 +7,113 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import jakarta.ws.rs.core.Response;
+//import jdk.incubator.vector.VectorOperators;
 
 @Path("/spam")
 public class SpamResource {
 
 //    your SpamDetector Class responsible for all the SpamDetecting logic
+
     SpamDetector detector = new SpamDetector();
-    private String readFileContents;
+    List<TestFile> spamResult; //define
 
-
-    @Path("/data")
-    Response SpamResource(){
+    SpamResource() throws IOException {
 //        TODO: load resources, train and test to improve performance on the endpoint calls
         System.out.print("Training and testing the model, please wait");
 
+
 //      TODO: call  this.trainAndTest();
-        URL url = this.getClass().getClassLoader().getResource("/data"); //Access data folder
-        File data = null;
-        try {
-            data = new File(url.toURI());
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        //call function
+        spamResult = this.trainAndTest();
 
-        SpamDetector myDetector = new SpamDetector();
-        List<String, Double, String> mapFunc = myDetector.trainAndTest(data1);
-
-        ObjectMapper mapper = null;
-        Response myResp = Response.status(200).header("Access-Control-Allow-Origin", "http://localhost:8448")
-                .header("Content-Type", "application/json")
-                .entity(content)
-                .build();
-
-        return myResp;
     }
 
+    //There is a json output
+    //Note: For the output, the columns are in the wrong position (still need to fix)
     @GET
     @Produces("application/json")
-    public Response getSpamResults() {
+    public Response getSpamResults() throws IOException {
 //       TODO: return the test results list of TestFile, return in a Response object
-        //String content = this.readFileContents("/TestFile.java");
-
-
-        return
+        //Endpoint URL: http://localhost:8080/spamDetector-1.0/api/spam
 
         return Response.status(200)
                 .header("Access-Control-Allow-Origin", "*")
                 .header("Content-Type", "application/json")
-                .entity(content)
+                .entity(spamResult)
                 .build();
+
+        /*
+        Response.ResponseBuilder response = Response.ok(spamResult);
+        response.header("Access-Control-Allow-Origin", "*");
+        return response.build();
+        */
 
         //return null;
     }
 
 
+    //Not completed yet
     @GET
     @Path("//accuracy") //endpoint: /api/spam/accuracy
     @Produces("application/json")
     public Response getAccuracy() {
 //      TODO: return the accuracy of the detector, return in a Response object
-        String content = this.readFileContents("/TestFile.java");
+        //Endpoint URL: http://localhost:8080/spamDetector-1.0/api/spam/accuracy
+        //File data = null;
 
-
-        //calculate accuracy
-        //accuracy = ((numTruePositive + numTrueNegative) / numFiles);
+        double accuracy1 = detector.spamAccuracy(spamResult);
 
         return Response.status(200)
                 .header("Access-Control-Allow-Origin", "*")
                 .header("Content-Type", "application/json")
-                .entity(content)
+                .entity(accuracy1)
                 .build();
 
         //return null;
     }
 
+    //Not completed yet
     @GET
     @Path("/precision") //endpoint: /api/spam/precision
     @Produces("application/json")
     public Response getPrecision() {
-       //      TODO: return the precision of the detector, return in a Response object
+        //      TODO: return the precision of the detector, return in a Response object
+        //Endpoint URL: http://localhost:8080/spamDetector-1.0/api/spam/precision
 
-        //calculate precision
+        //send results of test
 
+        double precision1 = detector.spamPrecision(spamResult);
+        //String content = this.readFileContents("/");
 
-
-        String content = this.readFileContents("/TestFile.java");
 
         return Response.status(200)
                 .header("Access-Control-Allow-Origin", "*")
                 .header("Content-Type", "application/json")
-                .entity(content)
+                .entity(precision1)
                 .build();
 
         //return null;
     }
 
 
-    private List<TestFile> trainAndTest()  {
+    private List<TestFile> trainAndTest() throws IOException {
         if (this.detector==null){
             this.detector = new SpamDetector();
         }
 
 //        TODO: load the main directory "data" here from the Resources folder
-        File mainDirectory = null;
+        //URL url = this.getClass().getClassLoader().getResource("/csci2020u-assignment01-template/spamDetectorServer/src/main/resources/data"); //Access data folder
+
+        File mainDirectory = new File(getClass().getClassLoader().getResource("data").getFile());
+        File data;
+
         return this.detector.trainAndTest(mainDirectory);
     }
-
 }
