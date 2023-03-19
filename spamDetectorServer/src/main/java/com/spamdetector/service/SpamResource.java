@@ -1,5 +1,6 @@
 package com.spamdetector.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.spamdetector.domain.TestFile;
 import com.spamdetector.util.SpamDetector;
 import jakarta.ws.rs.GET;
@@ -22,7 +23,10 @@ public class SpamResource {
 //    your SpamDetector Class responsible for all the SpamDetecting logic
 
     SpamDetector detector = new SpamDetector();
-    List<TestFile> spamResult; //define
+    List<TestFile> spamResult; //declare
+    double accuracy; //declare
+
+
 
     SpamResource() throws IOException {
 //        TODO: load resources, train and test to improve performance on the endpoint calls
@@ -35,8 +39,7 @@ public class SpamResource {
 
     }
 
-    //There is a json output
-    //Note: For the output, the columns are in the wrong position (still need to fix)
+
     @GET
     @Produces("application/json")
     public Response getSpamResults() throws IOException {
@@ -49,37 +52,28 @@ public class SpamResource {
                 .entity(spamResult)
                 .build();
 
-        /*
-        Response.ResponseBuilder response = Response.ok(spamResult);
-        response.header("Access-Control-Allow-Origin", "*");
-        return response.build();
-        */
-
-        //return null;
     }
 
 
-    //Not completed yet
     @GET
-    @Path("//accuracy") //endpoint: /api/spam/accuracy
+    @Path("/accuracy") //endpoint: /api/spam/accuracy
     @Produces("application/json")
     public Response getAccuracy() {
 //      TODO: return the accuracy of the detector, return in a Response object
         //Endpoint URL: http://localhost:8080/spamDetector-1.0/api/spam/accuracy
-        //File data = null;
 
-        double accuracy1 = detector.spamAccuracy(spamResult);
+        accuracy = this.detector.spamAccuracy(spamResult); //call function
 
         return Response.status(200)
                 .header("Access-Control-Allow-Origin", "*")
                 .header("Content-Type", "application/json")
-                .entity(accuracy1)
+                .entity(accuracy)
                 .build();
 
         //return null;
     }
 
-    //Not completed yet
+
     @GET
     @Path("/precision") //endpoint: /api/spam/precision
     @Produces("application/json")
@@ -115,5 +109,27 @@ public class SpamResource {
         File data;
 
         return this.detector.trainAndTest(mainDirectory);
+    }
+
+    private double spamAccuracy() throws IOException {
+        if (this.detector==null){
+            this.detector = new SpamDetector();
+        }
+
+//      TODO: load the main directory "data" here from the Resources folder
+        File data;
+
+        return this.detector.spamAccuracy(spamResult);
+    }
+
+    private double spamPrecision() throws IOException {
+        if (this.detector==null){
+            this.detector = new SpamDetector();
+        }
+
+//      TODO: load the main directory "data" here from the Resources folder
+        File data;
+
+        return this.detector.spamPrecision(spamResult);
     }
 }
