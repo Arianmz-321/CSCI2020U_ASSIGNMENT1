@@ -1,5 +1,6 @@
 package com.spamdetector.util;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.spamdetector.domain.TestFile;
 
 import java.io.*;
@@ -13,6 +14,7 @@ import java.util.*;
  * You may create more methods to help you organize you strategy and make you code more readable
  */
 public class SpamDetector {
+
 
     //helper function
     public Map<String, Integer> fileFreqDir(File dir) throws IOException {
@@ -48,19 +50,19 @@ public class SpamDetector {
     }
 
     //helper function
-    public Map<String, Float> fileSpamProbDir(File dir, Map<String,Float> probSpam) throws IOException {
-        Map<String, Float> probabilities = new TreeMap<>(); //global map for <Email, Prob that email is spam>
+    public Map<String, Double> fileSpamProbDir(File dir, Map<String,Double> probSpam) throws IOException {
+        Map<String, Double> probabilities = new TreeMap<>(); //global map for <Email, Prob that email is spam>
 
         File[] filesInDir = dir.listFiles();
         int numFiles = filesInDir.length;
 
-        float PrSWi; //Prob that a file is spam, given that it contains the word Wi
+        double PrSWi; //Prob that a file is spam, given that it contains the word Wi
 
         // iterate over each file in the dir, and calculate probability that email is spam
         for (int i = 0; i<numFiles; i++){
             //for each file in directory, check word by word
             Map<String, Integer> wordMap = findWordInFile(filesInDir[i]);
-            float eta = 0;
+            double eta = 0;
 
 
             // merge the file wordMap into the global frequencies
@@ -69,13 +71,16 @@ public class SpamDetector {
             while (keyIterator.hasNext()){
                 String word  = keyIterator.next();
 
-                PrSWi = probSpam.get(word); //Prob that a file is spam, given that it contains the word Wi
 
-                eta += (Math.log((1 - PrSWi)) - Math.log(PrSWi));
+                //probSpam: map of <word Wi, PrSWi>
+                if (probSpam.containsKey(word)) {
+                    PrSWi = probSpam.get(word); //Prob that a file is spam, given that it contains the word Wi
 
+                    eta += ((double) Math.log((1.0 - PrSWi)) - (double) Math.log(PrSWi));
+                }
             }
 
-            float PrSF = (float) (1 / (1 + Math.pow(Math.E, eta))); //prob that a file is spam, after checking all words of file
+            double PrSF = (double) (1.0 / (1.0 + Math.pow(Math.E, eta))); //prob that a file is spam, after checking all words of file
 
             probabilities.put(filesInDir[i].getName(), PrSF);
         }
@@ -88,8 +93,8 @@ public class SpamDetector {
 
         Map<String, Integer> trainHamFreq = new TreeMap<>(); //map of <word, number of files containing that word in ham folder>
         Map<String, Integer> trainSpamFreq = new TreeMap<>(); //map of <word, number of files containing that word in spam folder>
-        Map<String, Float> probSpam = new TreeMap<>(); //map of <word Wi, PSWi>
-        //PSWi = Prob that file is spam, given that it contains the word Wi
+        Map<String, Double> probSpam = new TreeMap<>(); //map of <word Wi, PSWi>
+        //PrSWi = Prob that file is spam, given that it contains the word Wi
 
         File hamFiles = new File(mainDirectory, "/train/ham"); //directory of ham files (/train/ham)
         File[] hamFilesList = hamFiles.listFiles();
@@ -98,7 +103,6 @@ public class SpamDetector {
         File[] spamFilesList = spamFiles.listFiles();
 
 
-        //????
         trainHamFreq = fileFreqDir(hamFiles); //map of <word, number of files containing that word in ham folder>
         trainSpamFreq = fileFreqDir(spamFiles); //map of <word, number of files containing that word in spam folder>
 
@@ -108,9 +112,9 @@ public class SpamDetector {
 
 
         //Formulas
-        float PrWiS;
-        float PrWiH;
-        float PrSWi = 0;
+        double PrWiS;
+        double PrWiH;
+        double PrSWi = 0;
         String word;
 
 
@@ -120,7 +124,7 @@ public class SpamDetector {
         while (frequenciesIteratorSpam.hasNext()) {
             //if(trainHamFreq.containsKey(word)) {
             word = frequenciesIteratorSpam.next();
-            PrWiS = ((float) trainSpamFreq.get(word) / (float) numSpamFiles); //Prob that the word Wi appears in spam file
+            PrWiS = ((double) trainSpamFreq.get(word) / (double) numSpamFiles); //Prob that the word Wi appears in spam file
 
             if (trainHamFreq.containsKey(word)) {
                 PrWiH = (trainHamFreq.get(word) / numHamFiles); //Prob that the word Wi appears in ham file
@@ -141,8 +145,8 @@ public class SpamDetector {
         File TestSpamFiles = new File(mainDirectory, "/test/spam"); //directory of spam files (/test/spam)
         File[] TestSpamFilesList = TestSpamFiles.listFiles();
 
-        Map<String, Float> testHamMap = new TreeMap<>();
-        Map<String, Float> testSpamMap = new TreeMap<>();
+        Map<String, Double> testHamMap = new TreeMap<>();
+        Map<String, Double> testSpamMap = new TreeMap<>();
 
         testHamMap = fileSpamProbDir(TestHamFiles, probSpam);
         testSpamMap = fileSpamProbDir(TestSpamFiles, probSpam);
@@ -155,7 +159,7 @@ public class SpamDetector {
         Iterator<String> keyIterator = keys.iterator(); //iterate over all the keys
         while (keyIterator.hasNext()) { //iterate through map
             String name = keyIterator.next();
-            float prob = testHamMap.get(name);
+            double prob = testHamMap.get(name);
 
             //result.filename = name;
             //result.spamProbability = prob;
@@ -170,17 +174,18 @@ public class SpamDetector {
         Iterator<String> keyIterator1 = keys1.iterator();
         while (keyIterator1.hasNext()) {
             String name = keyIterator1.next();
-            float prob = testSpamMap.get(name);
+            double prob = testSpamMap.get(name);
 
             //result.filename = name;
             //result.spamProbability = prob;
             //result.actualClass = "Spam";
 
-            TestFile result = new TestFile(name, prob, "Spam");
+            TestFile result = new TestFile(name, prob, "Spam"); //put name, prob, class into TestFile obj
             spamResult.add(result);
         }
 
-        return spamResult;
+        return spamResult; //return ArrayList<TestFile>
+        //TestFile contains name, probability, actualclass
     }
 
     //helper function: determine which new words exist in each file (ie each email)
@@ -207,17 +212,17 @@ public class SpamDetector {
     //helper function
     public double spamAccuracy(List<TestFile> spamResult) {
 
-        //Positive: email is spam
-        //set 0.95 as the threshold
-        //assumption: if spam prob is >= 0.95, the prediction is that the email is spam
+        //Define Positive: email is spam
+        //set 0.6 as the threshold
+        //assumption: if spam prob is >= 0.6, the prediction is that the email is spam
 
         int numTruePositive = 0; //model correctly predicts the positive class
         int numTrueNegative = 0; //model correctly predicts the negative class
         int numFalsePositive = 0; //model incorrectly predicts the positive class
         int numFiles = spamResult.size();
 
-        float accuracy;
-        float precision;
+        double accuracy;
+        double precision;
         double prob;
         String realClass;
 
@@ -227,17 +232,17 @@ public class SpamDetector {
             realClass = spamResult.get(i).getActualClass();
 
             //if file is in spam folder and prob of file being spam is 0.95 or greater
-            if (prob >= 0.95 && realClass == "Spam") {
+            if (prob >= 0.6 && realClass == "Spam") {
 
                 numTruePositive += 1; //increase by 1
             }
 
-            else if (prob < 0.95 && realClass == "Ham") { //if file is in ham folder and prob of file being spam is less than 0.95
+            else if (prob < 0.6 && realClass == "Ham") { //if file is in ham folder and prob of file being spam is less than 0.95
 
                 numTrueNegative += 1;
             }
 
-            else if (prob >= 0.95 && realClass == "Ham") { //if file is in ham folder and prob of file being spam is 0.95 or greater
+            else if (prob >= 0.6 && realClass == "Ham") { //if file is in ham folder and prob of file being spam is 0.95 or greater
 
                 numFalsePositive += 1;
             }
@@ -246,6 +251,24 @@ public class SpamDetector {
         accuracy = ((numTruePositive + numTrueNegative) / numFiles);
         return accuracy;
     }
+
+    //Creating a class
+    public class SpamAccuracy1 {
+        @JsonProperty("accuracy")
+        private double accuracy;
+
+        public SpamAccuracy1(double accuracy) { //constructor
+            this.accuracy = accuracy;
+        }
+        public double getAccuracy() {
+            return this.accuracy;
+        }
+
+        public void setAccuracy(double value) {
+            this.accuracy = value;
+        }
+    }
+
 
     //helper function
     public double spamPrecision(List<TestFile> spamResult) {
@@ -259,8 +282,8 @@ public class SpamDetector {
         int numFalsePositive = 0; //model incorrectly predicts the positive class
         int numFiles = spamResult.size();
 
-        float accuracy;
-        float precision;
+        double accuracy;
+        double precision;
         double prob;
         String realClass;
 
@@ -270,17 +293,17 @@ public class SpamDetector {
             realClass = spamResult.get(i).getActualClass();
 
             //if file is in spam folder and prob of file being spam is 0.95 or greater
-            if ((prob >= 0.95) && (realClass == "Spam")) {
+            if ((prob >= 0.6) && (realClass == "Spam")) {
 
                 numTruePositive += 1; //increase by 1
             }
 
-            else if (prob < 0.95 && realClass == "Ham") { //if file is in ham folder and prob of file being spam is less than 0.95
+            else if (prob < 0.6 && realClass == "Ham") { //if file is in ham folder and prob of file being spam is less than 0.95
 
                 numTrueNegative += 1;
             }
 
-            else if ((prob >= 0.95) && (realClass == "Ham")) { //if file is in ham folder and prob of file being spam is 0.95 or greater
+            else if ((prob >= 0.6) && (realClass == "Ham")) { //if file is in ham folder and prob of file being spam is 0.95 or greater
 
                 numFalsePositive += 1;
             }
@@ -288,6 +311,24 @@ public class SpamDetector {
 
         precision = (numTruePositive / (numFalsePositive + numTruePositive));
         return precision;
+    }
+
+    //creating a class
+    public class SpamPrecision1 {
+
+        @JsonProperty("precision")
+        private double precision;
+
+        public SpamPrecision1(double precision) { //constructor
+            this.precision = precision;
+        }
+        public double getPrecision() {
+            return this.precision;
+        }
+
+        public void setPrecision(double value) {
+            this.precision = value;
+        }
     }
 
 
@@ -306,9 +347,6 @@ public class SpamDetector {
 
     }
 
-    //public Map<String, Integer> frequencies(File data) {
-    //}
-
 
     //check to make sure output works
     public static void displayList(List<TestFile> spamResult)
@@ -323,12 +361,18 @@ public class SpamDetector {
 
         SpamDetector myDetector = new SpamDetector();
 
-        File data1 = new File("/csci2020u-assignment01-template/spamDetectorServer/src/main/resources/data/test/spam");
-        //File data1 = new File("/src/main/resources/data/test/spam"); //can also do this way
+        //File data1 = new File("C:/Users/Matthew/Desktop/MatthewWongFiles/wongm/CSCI2020U/Assignments/csci2020u-assignment01-template/spamDetectorServer/src/main/resources/data");
+        File data1 = new File("/src/main/resources/data/test/spam"); //can also do this way
 
-        spamResult = myDetector.trainAndTest(data1);
+        spamResult = myDetector.trainAndTest(data1); //call function
+
+        double precisionResult = myDetector.spamPrecision(spamResult); //call function
+
+        double accuracyResult = myDetector.spamAccuracy(spamResult); //call function
 
         //System.out.println(spamResult);
-        displayList(spamResult);
+        //displayList(spamResult);
+        //System.out.println("Precision result:" + precisionResult);
+        //System.out.println("Accuracy result:" + accuracyResult);
     }
 }
